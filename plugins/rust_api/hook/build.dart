@@ -20,8 +20,19 @@ void main(List<String> args) async {
 // NDKs before r26 keep it under lib64, later ones and every macOS NDK under lib.
 Map<String, String> _bindgenEnvironment(BuildInput input) {
   final targetOS = input.config.code.targetOS;
-  if (!input.config.buildCodeAssets ||
-      (targetOS != OS.android && targetOS != OS.iOS)) {
+  if (!input.config.buildCodeAssets) {
+    return const {};
+  }
+  if (targetOS == OS.iOS) {
+    // QuickJS is compiled against the installed Xcode SDK; without an explicit
+    // deployment target the link runs at iOS 10.0 where ___chkstk_darwin is
+    // absent, so the final rust_api link fails with undefined symbols.
+    return const {
+      'IPHONEOS_DEPLOYMENT_TARGET': '15.0',
+      'RUSTFLAGS': '-C link-arg=-miphoneos-version-min=15.0',
+    };
+  }
+  if (targetOS != OS.android) {
     return const {};
   }
   final compiler = input.config.code.cCompiler?.compiler;

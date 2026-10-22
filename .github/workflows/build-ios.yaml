@@ -60,6 +60,11 @@ jobs:
 
       - name: Build iOS (no codesign)
         id: build
+        env:
+          # rquickjs/quickjs C objects are compiled against the Xcode SDK and
+          # otherwise link at min iOS 10.0, where ___chkstk_darwin is missing.
+          IPHONEOS_DEPLOYMENT_TARGET: '15.0'
+          RUSTFLAGS: '-C link-arg=-miphoneos-version-min=15.0'
         run: |
           set +e
           flutter build ios --release --no-codesign -v > "$RUNNER_TEMP/ios-build.log" 2>&1

@@ -19,8 +19,9 @@ void main(List<String> args) async {
 // rquickjs runs bindgen on Android, which must load the NDK's libclang; Linux
 // NDKs before r26 keep it under lib64, later ones and every macOS NDK under lib.
 Map<String, String> _bindgenEnvironment(BuildInput input) {
+  final targetOS = input.config.code.targetOS;
   if (!input.config.buildCodeAssets ||
-      input.config.code.targetOS != OS.android) {
+      (targetOS != OS.android && targetOS != OS.iOS)) {
     return const {};
   }
   final compiler = input.config.code.cCompiler?.compiler;
@@ -37,8 +38,8 @@ Map<String, String> _bindgenEnvironment(BuildInput input) {
     }
   }
   throw StateError(
-    'No libclang under ${llvmRoot.path} (lib or lib64); the NDK Flutter '
-    'passed cannot run bindgen for rquickjs',
+    'No libclang under ${llvmRoot.path} (lib or lib64); the toolchain '
+    'Flutter passed cannot run bindgen for rquickjs',
   );
 }
 

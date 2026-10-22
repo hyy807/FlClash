@@ -24,7 +24,7 @@ libc = "0.2"
 
 # rquickjs ships pre-generated bindings for every target this project builds
 # except the Android ones, which have to be generated during the build.
-[target.'cfg(target_os = "android")'.dependencies]
+[target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
 rquickjs = { version = "0.12", default-features = false, features = ["bindgen"] }
 
 # libc 0.2.190 dropped the dyld image APIs on iOS, which breaks backtrace

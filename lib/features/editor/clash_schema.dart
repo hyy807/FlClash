@@ -571,6 +571,23 @@ const _trojanTransport = {
   'smux': _smux,
 };
 
+/// LightXtreme / 闪连 私有 lx-xhttp 传输 (anytls 承载其上)。
+const _lxTransport = {
+  'transport': YamlSchema.map({
+    'type': YamlSchema.scalar(['lx-xhttp', 'xhttp', '闪电旋风劈']),
+    'path': _str,
+    'mode': _str,
+    'obfs-key': _str,
+    'padding-min': _str,
+    'padding-max': _str,
+    'download': YamlSchema.map({
+      'server': _str,
+      'port': _str,
+      'path': _str,
+    }),
+  }),
+};
+
 const _aeadCiphers = [
   'aes-128-gcm',
   'aes-192-gcm',
@@ -831,6 +848,7 @@ const _proxyVariants = <String, Map<String, YamlSchema>>{
     'client-fingerprint': _clientFingerprint,
     ..._sniTls,
     ..._tlsLayers,
+    ..._lxTransport,
   },
   'hysteria2': {
     ..._server,

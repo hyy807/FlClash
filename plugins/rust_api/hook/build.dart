@@ -48,6 +48,19 @@ Map<String, String> _bindgenEnvironment(BuildInput input) {
       return {'LIBCLANG_PATH': directory.path};
     }
   }
+  // NDK r27 may omit the shared libclang; bindgen can use the host LLVM
+  // library while the Android compiler/sysroot still select target headers.
+  for (final path in [
+    if (Platform.environment['LIBCLANG_PATH'] case final String path) path,
+    '/usr/lib/llvm-18/lib',
+    '/usr/lib/llvm-17/lib',
+    '/usr/lib/llvm-14/lib',
+  ]) {
+    final directory = Directory(path);
+    if (directory.existsSync() && directory.listSync().any(_isLibclang)) {
+      return {'LIBCLANG_PATH': directory.path};
+    }
+  }
   throw StateError(
     'No libclang under ${llvmRoot.path} (lib or lib64); the toolchain '
     'Flutter passed cannot run bindgen for rquickjs',

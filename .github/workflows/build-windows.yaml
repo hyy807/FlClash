@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - 'v*'
+      - 'v0.9.2-lx'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,8 +16,10 @@ env:
 
 jobs:
   windows:
-    name: Windows amd64
+    name: Windows amd64 release
     runs-on: windows-2022
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -60,22 +62,23 @@ jobs:
       - name: Flutter dependencies
         run: flutter pub get
 
-      - name: Build (core + rust + windows package)
-        run: dart setup.dart windows --env stable -v
-
-      - name: List dist
+      - name: Build Windows release packages
         shell: bash
-        run: ls -lh dist
+        run: |
+          dart setup.dart windows --env stable -v
+          find dist -maxdepth 1 -type f -print
+
+      - name: Verify stable package metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in dist/*; do
+            ! grep -aEi 'APP_ENV.?=.?pre|pre-release|pretest' "$file" || exit 1
+          done
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: FlClash-LX-windows-amd64
-          path: ./dist
+          path: ./dist/*
           if-no-files-found: error
-
-      - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ./dist/*

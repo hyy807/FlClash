@@ -62,11 +62,10 @@ jobs:
       - name: Verify stable package metadata
         run: |
           set -euo pipefail
-          ! grep -RaiE 'APP_ENV.?=.?pre|pre-release|pretest' dist || true
+          python3 -c 'import json; assert json.load(open("env.json"))["APP_ENV"] == "stable"'
+          aapt=$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)
           for apk in dist/*.apk; do
-            unzip -p "$apk" AndroidManifest.xml 2>/dev/null | strings | grep -q '0.9.2' || {
-              echo "APK metadata missing 0.9.2: $apk"; exit 1;
-            }
+            "$aapt" dump badging "$apk" | grep "package:.*name='com.follow.clash'.*versionName='0.9.2'"
           done
 
       - name: Upload artifact

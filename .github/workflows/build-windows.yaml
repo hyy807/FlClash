@@ -72,6 +72,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python -c 'import json; assert json.load(open("env.json"))["APP_ENV"] == "stable"'
           for file in dist/*; do
             ! grep -aEi 'APP_ENV.?=.?pre|pre-release|pretest' "$file" || exit 1
           done

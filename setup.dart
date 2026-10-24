@@ -87,7 +87,7 @@ ArgParser createSetupArgParser() {
   return ArgParser()
     ..addOption(
       'env',
-      defaultsTo: 'pre',
+      defaultsTo: 'stable',
       allowed: ['dev', 'pre', 'stable'],
       help: 'Application environment',
     )
@@ -237,8 +237,8 @@ String _detectArch() {
 }
 
 Future<bool> _hasCommand(String cmd) async {
-  final which = Platform.isWindows ? 'where' : 'command';
-  final args = Platform.isWindows ? [cmd] : ['-v', cmd];
+  final which = Platform.isWindows ? 'where' : 'which';
+  final args = [cmd];
   final result = await Process.run(which, args);
   return result.exitCode == 0;
 }

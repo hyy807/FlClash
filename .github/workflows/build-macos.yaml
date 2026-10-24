@@ -56,11 +56,12 @@ jobs:
       - name: Verify stable package metadata
         run: |
           set -euo pipefail
+          python3 -c 'import json; assert json.load(open("env.json"))["APP_ENV"] == "stable"'
           for dmg in dist/*.dmg; do
             hdiutil attach "$dmg" -nobrowse -readonly -mountpoint /tmp/flclash-release
             app=$(find /tmp/flclash-release -maxdepth 1 -name '*.app' -print -quit)
             /usr/libexec/PlistBuddy -c 'Print:CFBundleShortVersionString' "$app/Contents/Info.plist" | grep -qx '0.9.2'
-            ! grep -RaiE 'APP_ENV.?=.?pre|pre-release|pretest' "$app" || true
+            ! grep -RaiE 'APP_ENV.?=.?pre|pre-release|pretest' "$app" || exit 1
             hdiutil detach /tmp/flclash-release
           done
 

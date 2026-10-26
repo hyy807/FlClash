@@ -53,16 +53,21 @@ Map<String, String> _bindgenEnvironment(BuildInput input) {
   }
   final sysrootArgs = Directory(ndkSysroot).existsSync()
       ? {
-          'BINDGEN_EXTRA_CLANG_ARGS': '--sysroot=$ndkSysroot '
-              '-I$ndkSysroot/usr/include '
-              '-I$ndkSysroot/usr/include/aarch64-linux-android '
-              '-I$ndkSysroot/usr/include/arm-linux-androideabi '
-              '-I$ndkSysroot/usr/include/x86_64-linux-android '
-              '${clangRes.join(' ')}',
-          'BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android': '--sysroot=$ndkSysroot '
-              '-I$ndkSysroot/usr/include '
-              '-I$ndkSysroot/usr/include/aarch64-linux-android '
-              '${clangRes.join(' ')}',
+          for (final key in const [
+            'BINDGEN_EXTRA_CLANG_ARGS',
+            'BINDGEN_EXTRA_CLANG_ARGS_arm64_v8a',
+            'BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android',
+            'BINDGEN_EXTRA_CLANG_ARGS_armv7_linux_androideabi',
+            'BINDGEN_EXTRA_CLANG_ARGS_armeabi_v7a',
+            'BINDGEN_EXTRA_CLANG_ARGS_x86_64_linux_android',
+            'BINDGEN_EXTRA_CLANG_ARGS_x64',
+          ])
+            key: '--sysroot=$ndkSysroot '
+                '-I$ndkSysroot/usr/include '
+                '-I$ndkSysroot/usr/include/aarch64-linux-android '
+                '-I$ndkSysroot/usr/include/arm-linux-androideabi '
+                '-I$ndkSysroot/usr/include/x86_64-linux-android '
+                '${clangRes.join(' ')}',
         }
       : const <String, String>{};
   for (final name in const ['lib', 'lib64']) {

@@ -69,6 +69,7 @@ jobs:
             for d in "$NDK_PATH"/toolchains/llvm/prebuilt/linux-x86_64/lib/clang/*/include; do
               [ -d "$d" ] && inc="$inc:$d"
             done
+            echo "LIBCLANG_PATH=$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/lib"
             echo "CPATH=$inc"
             echo "C_INCLUDE_PATH=$inc"
           } >> "$GITHUB_ENV"

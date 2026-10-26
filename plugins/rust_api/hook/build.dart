@@ -5,6 +5,12 @@ import 'package:flutter_rust_bridge_hooks/flutter_rust_bridge_hooks.dart';
 
 void main(List<String> args) async {
   await build(args, (input, output) async {
+    if (Platform.environment['FLCLASH_SKIP_RUST_ASSETS'] == '1') {
+      stdout.writeln(
+        'Skipping the Rust build: a prebuilt librust_api.so is shipped in jniLibs',
+      );
+      return;
+    }
     if (input.userDefines['build_assets'] == false) {
       stdout.writeln('Skipping the Rust build: user-define build_assets=false');
       return;

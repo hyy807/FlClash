@@ -59,7 +59,13 @@ jobs:
           # gradle/libs.versions.toml pins 28.2.13676358; without it AGP silently
           # falls back to the runner's NDK 27, which ships no libclang for bindgen.
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;28.2.13676358" >/dev/null
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.2.13676358" >> "$GITHUB_ENV"
+          NDK_PATH="$ANDROID_HOME/ndk/28.2.13676358"
+          {
+            echo "ANDROID_NDK_HOME=$NDK_PATH"
+            echo "ANDROID_NDK_ROOT=$NDK_PATH"
+            echo "ANDROID_NDK=$NDK_PATH"
+            echo "ANDROID_NDK_LATEST_HOME=$NDK_PATH"
+          } >> "$GITHUB_ENV"
 
       - name: Patch NDK sysroot for bindgen
         run: |

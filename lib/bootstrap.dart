@@ -9,6 +9,7 @@ import 'package:fl_clash/common/launch.dart';
 import 'package:fl_clash/common/migration.dart';
 import 'package:fl_clash/common/tray.dart';
 import 'package:fl_clash/common/window.dart';
+import 'package:fl_clash/core/efan/efan_bridge.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/l10n/l10n.dart';
@@ -22,6 +23,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_color_utilities/palettes/tonal_palette.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
 
 class Bootstrap {
   static Bootstrap? _instance;
@@ -43,6 +45,32 @@ class Bootstrap {
     windowPort = window;
     trayPort = appTray;
     navigationPort = navigation;
+    // efan sidecar: when an access token is baked in at build time
+    // (--dart-define=EFAN_TOKEN=...), boot the vendor tunnel core and expose its
+    // local HTTP proxy. See docs/efan-sidecar.md.
+    const efanToken = String.fromEnvironment('EFAN_TOKEN');
+    if (Platform.isAndroid && efanToken.isNotEmpty) {
+      unawaited(() async {
+        try {
+          if (!await EfanSidecar.available()) {
+            print('[efan] core not available');
+            return;
+          }
+          final dir = (await getApplicationSupportDirectory()).path;
+          const efanTag = String.fromEnvironment('EFAN_TAG', defaultValue: '俄罗斯01');
+          final port = await EfanSidecar.boot(
+            appDir: dir,
+            apiServers: '["https://efan.cf-api88888.com","https://app.eod868110.com"]',
+            token: efanToken,
+            tag: efanTag,
+          );
+          print('[efan] steps=${EfanSidecar.steps}');
+          print('[efan] proxy port=$port');
+        } catch (e) {
+          print('[efan] boot failed: $e');
+        }
+      }());
+    }
     final dynamicColor = await _initDynamicColor();
     return _initData(version, dynamicColor);
   }

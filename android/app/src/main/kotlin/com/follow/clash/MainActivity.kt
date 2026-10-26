@@ -14,10 +14,12 @@ class MainActivity : FlutterActivity() {
         flutterEngine.plugins.add(BatteryPlugin())
         flutterEngine.plugins.add(ServicePlugin())
         flutterEngine.plugins.add(TilePlugin())
+        EfanBridge.attach(flutterEngine.dartExecutor.binaryMessenger)
         ServiceState.attachFlutterEngine(flutterEngine)
     }
 
     override fun onDestroy() {
+        EfanBridge.detach()
         flutterEngine?.let(ServiceState::detachFlutterEngine)
         super.onDestroy()
     }

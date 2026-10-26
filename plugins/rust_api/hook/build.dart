@@ -37,15 +37,40 @@ Map<String, String> _bindgenEnvironment(BuildInput input) {
   }
   final compiler = input.config.code.cCompiler?.compiler;
   if (compiler == null) {
-    return const {};
+    return _ndkSysrootEnvFromPlatformEnv();
   }
   final llvmRoot = File.fromUri(compiler).parent.parent;
+  // bindgen shells out to libclang without the NDK sysroot, so rquickjs-sys
+  // fails on <stdbool.h>. Point clang at the sysroot explicitly.
+  final ndkSysroot = '${llvmRoot.path}/sysroot';
+  final clangRes = <String>[];
+  final clangLib = Directory('${llvmRoot.path}/lib/clang');
+  if (clangLib.existsSync()) {
+    for (final d in clangLib.listSync().whereType<Directory>()) {
+      final inc = '${d.path}/include';
+      if (Directory(inc).existsSync()) clangRes.add('-I$inc');
+    }
+  }
+  final sysrootArgs = Directory(ndkSysroot).existsSync()
+      ? {
+          'BINDGEN_EXTRA_CLANG_ARGS': '--sysroot=$ndkSysroot '
+              '-I$ndkSysroot/usr/include '
+              '-I$ndkSysroot/usr/include/aarch64-linux-android '
+              '-I$ndkSysroot/usr/include/arm-linux-androideabi '
+              '-I$ndkSysroot/usr/include/x86_64-linux-android '
+              '${clangRes.join(' ')}',
+          'BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android': '--sysroot=$ndkSysroot '
+              '-I$ndkSysroot/usr/include '
+              '-I$ndkSysroot/usr/include/aarch64-linux-android '
+              '${clangRes.join(' ')}',
+        }
+      : const <String, String>{};
   for (final name in const ['lib', 'lib64']) {
     final directory = Directory(
       '${llvmRoot.path}${Platform.pathSeparator}$name',
     );
     if (directory.existsSync() && directory.listSync().any(_isLibclang)) {
-      return {'LIBCLANG_PATH': directory.path};
+      return {'LIBCLANG_PATH': directory.path, ...sysrootArgs};
     }
   }
   // NDK r27 may omit the shared libclang; bindgen can use the host LLVM
@@ -58,7 +83,7 @@ Map<String, String> _bindgenEnvironment(BuildInput input) {
   ]) {
     final directory = Directory(path);
     if (directory.existsSync() && directory.listSync().any(_isLibclang)) {
-      return {'LIBCLANG_PATH': directory.path};
+      return {'LIBCLANG_PATH': directory.path, ...sysrootArgs};
     }
   }
   throw StateError(
@@ -69,4 +94,34 @@ Map<String, String> _bindgenEnvironment(BuildInput input) {
 
 bool _isLibclang(FileSystemEntity entity) {
   return entity.path.split(Platform.pathSeparator).last.startsWith('libclang.');
+}
+
+/// bindgen's libclang has no NDK sysroot by default, so rquickjs-sys fails on
+/// <stdbool.h> whenever the code-assets config does not expose the C compiler.
+/// Fall back to ANDROID_NDK_HOME / ANDROID_NDK_ROOT.
+Map<String, String> _ndkSysrootEnvFromPlatformEnv() {
+  final env = Platform.environment;
+  final ndk = env['ANDROID_NDK_HOME'] ?? env['ANDROID_NDK_ROOT'] ?? env['NDK_HOME'];
+  if (ndk == null || ndk.isEmpty) return const {};
+  final llvm = '$ndk/toolchains/llvm/prebuilt/linux-x86_64';
+  final sysroot = '$llvm/sysroot';
+  if (!Directory(sysroot).existsSync()) return const {};
+  final clangRes = <String>[];
+  final clangLib = Directory('$llvm/lib/clang');
+  if (clangLib.existsSync()) {
+    for (final d in clangLib.listSync().whereType<Directory>()) {
+      final inc = '${d.path}/include';
+      if (Directory(inc).existsSync()) clangRes.add('-I$inc');
+    }
+  }
+  final args = '--sysroot=$sysroot -I$sysroot/usr/include '
+      '-I$sysroot/usr/include/aarch64-linux-android '
+      '-I$sysroot/usr/include/x86_64-linux-android '
+      '-I$sysroot/usr/include/arm-linux-androideabi ${clangRes.join(' ')}';
+  return {
+    'BINDGEN_EXTRA_CLANG_ARGS': args,
+    'BINDGEN_EXTRA_CLANG_ARGS_x86_64_linux_android': args,
+    'BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android': args,
+    'BINDGEN_EXTRA_CLANG_ARGS_armv7_linux_androideabi': args,
+  };
 }

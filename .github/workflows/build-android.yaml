@@ -54,6 +54,22 @@ jobs:
           curl -fsSL --retry 3 -o "$bundle" https://curl.se/ca/cacert-2026-09-25.pem
           echo "a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505  $bundle" | sha256sum -c -
 
+      - name: Patch NDK sysroot for bindgen
+        run: |
+          # rquickjs-sys runs bindgen with the host libclang, which does not ship
+          # the NDK's builtin headers; without them <stdbool.h>/<stdint.h> are
+          # missing and every Android ABI fails to build.
+          for ndk in "$ANDROID_HOME"/ndk/*; do
+            llvm="$ndk/toolchains/llvm/prebuilt/linux-x86_64"
+            [ -d "$llvm/sysroot/usr/include" ] || continue
+            for f in "$llvm"/lib/clang/*/include/*; do
+              [ -f "$f" ] || continue
+              b=$(basename "$f")
+              [ -e "$llvm/sysroot/usr/include/$b" ] || cp "$f" "$llvm/sysroot/usr/include/$b"
+            done
+            echo "patched $ndk"
+          done
+
       - name: Flutter dependencies
         run: flutter pub get
 

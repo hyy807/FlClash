@@ -103,6 +103,7 @@ jobs:
           # device we ship; the armv7 APK is produced locally and published with
           # the release.
           printf '{"APP_ENV":"stable"}' > env.json
+          touch skip_rust_assets.flag
           flutter build apk --release --split-per-abi \
             --target-platform android-arm64,android-arm,android-x64 \
             --dart-define-from-file=env.json

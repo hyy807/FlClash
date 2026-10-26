@@ -5,7 +5,7 @@ import 'package:flutter_rust_bridge_hooks/flutter_rust_bridge_hooks.dart';
 
 void main(List<String> args) async {
   await build(args, (input, output) async {
-    if (Platform.environment['FLCLASH_SKIP_RUST_ASSETS'] == '1') {
+    if (_prebuiltRustAssetsEnabled()) {
       stdout.writeln(
         'Skipping the Rust build: a prebuilt librust_api.so is shipped in jniLibs',
       );
@@ -134,4 +134,14 @@ Map<String, String> _ndkSysrootEnvFromPlatformEnv() {
     'BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android': args,
     'BINDGEN_EXTRA_CLANG_ARGS_armv7_linux_androideabi': args,
   };
+}
+
+/// CI builds ship a prebuilt librust_api.so from jniLibs instead of compiling it,
+/// because bindgen on the GitHub runner cannot resolve the NDK headers.
+bool _prebuiltRustAssetsEnabled() {
+  if (Platform.environment['FLCLASH_SKIP_RUST_ASSETS'] == '1') return true;
+  for (final dir in [Directory.current, Directory('..'), Directory('../..')]) {
+    if (File('${dir.path}/skip_rust_assets.flag').existsSync()) return true;
+  }
+  return false;
 }

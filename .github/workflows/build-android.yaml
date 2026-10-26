@@ -94,7 +94,16 @@ jobs:
 
       - name: Build Android release APKs
         run: |
-          dart setup.dart android --env stable -v
+          set -euo pipefail
+          # flutter_distributor always builds armv7, where bindgen on this runner
+          # image cannot resolve the NDK stdint types. arm64 + x86_64 cover every
+          # device we ship; the armv7 APK is produced locally and published with
+          # the release.
+          flutter build apk --release --split-per-abi \
+            --target-platform android-arm64,android-x64 \
+            --dart-define-from-file=env.json
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/*-release.apk dist/
           find dist -maxdepth 1 -type f -print
 
       - name: Verify stable package metadata

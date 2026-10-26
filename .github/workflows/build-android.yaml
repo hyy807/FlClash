@@ -54,6 +54,13 @@ jobs:
           curl -fsSL --retry 3 -o "$bundle" https://curl.se/ca/cacert-2026-09-25.pem
           echo "a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505  $bundle" | sha256sum -c -
 
+      - name: Install the NDK the build declares
+        run: |
+          # gradle/libs.versions.toml pins 28.2.13676358; without it AGP silently
+          # falls back to the runner's NDK 27, which ships no libclang for bindgen.
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;28.2.13676358" >/dev/null
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.2.13676358" >> "$GITHUB_ENV"
+
       - name: Patch NDK sysroot for bindgen
         run: |
           # rquickjs-sys runs bindgen with the host libclang, which does not ship

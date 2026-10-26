@@ -65,6 +65,12 @@ jobs:
             echo "ANDROID_NDK_ROOT=$NDK_PATH"
             echo "ANDROID_NDK=$NDK_PATH"
             echo "ANDROID_NDK_LATEST_HOME=$NDK_PATH"
+            inc="$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include"
+            for d in "$NDK_PATH"/toolchains/llvm/prebuilt/linux-x86_64/lib/clang/*/include; do
+              [ -d "$d" ] && inc="$inc:$d"
+            done
+            echo "CPATH=$inc"
+            echo "C_INCLUDE_PATH=$inc"
           } >> "$GITHUB_ENV"
 
       - name: Patch NDK sysroot for bindgen

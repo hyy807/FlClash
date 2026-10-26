@@ -51,23 +51,22 @@ Map<String, String> _bindgenEnvironment(BuildInput input) {
       if (Directory(inc).existsSync()) clangRes.add('-I$inc');
     }
   }
+  String argsFor(String triple) => '--sysroot=$ndkSysroot '
+      '-I$ndkSysroot/usr/include '
+      '-I$ndkSysroot/usr/include/$triple '
+      '${clangRes.join(' ')}';
   final sysrootArgs = Directory(ndkSysroot).existsSync()
       ? {
-          for (final key in const [
-            'BINDGEN_EXTRA_CLANG_ARGS',
-            'BINDGEN_EXTRA_CLANG_ARGS_arm64_v8a',
-            'BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android',
-            'BINDGEN_EXTRA_CLANG_ARGS_armv7_linux_androideabi',
-            'BINDGEN_EXTRA_CLANG_ARGS_armeabi_v7a',
-            'BINDGEN_EXTRA_CLANG_ARGS_x86_64_linux_android',
-            'BINDGEN_EXTRA_CLANG_ARGS_x64',
-          ])
-            key: '--sysroot=$ndkSysroot '
-                '-I$ndkSysroot/usr/include '
-                '-I$ndkSysroot/usr/include/aarch64-linux-android '
-                '-I$ndkSysroot/usr/include/arm-linux-androideabi '
-                '-I$ndkSysroot/usr/include/x86_64-linux-android '
-                '${clangRes.join(' ')}',
+          'BINDGEN_EXTRA_CLANG_ARGS': argsFor('aarch64-linux-android'),
+          'BINDGEN_EXTRA_CLANG_ARGS_arm64_v8a': argsFor('aarch64-linux-android'),
+          'BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android':
+              argsFor('aarch64-linux-android'),
+          'BINDGEN_EXTRA_CLANG_ARGS_armv7_linux_androideabi':
+              argsFor('arm-linux-androideabi'),
+          'BINDGEN_EXTRA_CLANG_ARGS_armeabi_v7a': argsFor('arm-linux-androideabi'),
+          'BINDGEN_EXTRA_CLANG_ARGS_x86_64_linux_android':
+              argsFor('x86_64-linux-android'),
+          'BINDGEN_EXTRA_CLANG_ARGS_x64': argsFor('x86_64-linux-android'),
         }
       : const <String, String>{};
   for (final name in const ['lib', 'lib64']) {

@@ -7,14 +7,29 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
+// Both fixes below have to reach the decoder as node edits, so a profile that
+// needs either one takes the slower path through the document.
+//
 // mihomo decodes an unquoted REALITY short-id as a YAML number (0123 is 83, 00
 // is 0); the scalar keeps its literal text, so retagging it restores the id.
 func unmarshalRawConfig(buf []byte) (*config.RawConfig, error) {
-	if !bytes.Contains(buf, []byte("short-id")) {
+	retag := bytes.Contains(buf, []byte("short-id"))
+	rewrite := hasVendorProxies(buf)
+	if !retag && !rewrite {
 		return config.UnmarshalRawConfig(buf)
 	}
 	var document yaml.Node
-	if yaml.Unmarshal(buf, &document) != nil || !retagShortIDs(&document) {
+	if yaml.Unmarshal(buf, &document) != nil {
+		return config.UnmarshalRawConfig(buf)
+	}
+	changed := false
+	if retag {
+		changed = retagShortIDs(&document)
+	}
+	if rewrite && rewriteVendorProxies(&document) > 0 {
+		changed = true
+	}
+	if !changed {
 		return config.UnmarshalRawConfig(buf)
 	}
 	rawConfig := config.DefaultRawConfig()

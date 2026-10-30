@@ -18,7 +18,6 @@ import (
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/hub"
-	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/hub/route"
 	authStore "github.com/metacubex/mihomo/listener/auth"
 	LC "github.com/metacubex/mihomo/listener/config"
@@ -97,7 +96,11 @@ func loadConfig(path string) (*config.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	cfg, err := executor.ParseWithBytes(buf)
+	rawConfig, err := unmarshalRawConfig(buf)
+	if err != nil {
+		return nil, err
+	}
+	cfg, err := config.ParseRawConfig(rawConfig)
 	if err != nil {
 		return nil, err
 	}

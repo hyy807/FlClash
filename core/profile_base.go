@@ -156,6 +156,9 @@ func mergeProfileBase(base *SetupBase) (*yaml.Node, error) {
 	if retag {
 		retagShortIDs(root)
 	}
+	if hasVendorProxies(buf) {
+		rewriteVendorProxies(root)
+	}
 	return &yaml.Node{Kind: yaml.DocumentNode, Content: []*yaml.Node{root}}, nil
 }
 

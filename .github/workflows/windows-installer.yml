@@ -34,10 +34,10 @@ jobs:
         run: |
           curl -fsSL --retry 3 -o core/Clash.Meta/component/ca/ca-certificates.crt "https://curl.se/ca/$CA_BUNDLE"
           echo "$CA_BUNDLE_SHA256  core/Clash.Meta/component/ca/ca-certificates.crt" | sha256sum -c -
-      - name: Build Windows installer
-        run: dart setup.dart windows --env stable -v
+      - name: Pre-download Go modules\n        working-directory: core/Clash.Meta\n        shell: pwsh\n        run: |\n          for ($i = 1; $i -le 5; $i++) {\n            go mod download\n            if ($LASTEXITCODE -eq 0) { break }\n            Start-Sleep -Seconds 10\n          }\n          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n      - name: Build Windows installer\n        run: dart setup.dart windows --env stable -v
       - uses: actions/upload-artifact@v4
         with:
           name: FlClash-windows-installer
           path: dist/*
           if-no-files-found: error
+

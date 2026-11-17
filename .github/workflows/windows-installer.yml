@@ -1,0 +1,43 @@
+name: Windows installer
+on:
+  workflow_dispatch:
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    env:
+      FLUTTER_VERSION: '3.47.6'
+      GO_VERSION: '1.27.1'
+      NDK_VERSION: r28c
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: core/go.sum
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - name: Enable long paths
+        shell: pwsh
+        run: git config --global core.longpaths true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Fetch CA certificates
+        shell: bash
+        env:
+          CA_BUNDLE: cacert-2026-09-25.pem
+          CA_BUNDLE_SHA256: a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505
+        run: |
+          curl -fsSL --retry 3 -o core/Clash.Meta/component/ca/ca-certificates.crt "https://curl.se/ca/$CA_BUNDLE"
+          echo "$CA_BUNDLE_SHA256  core/Clash.Meta/component/ca/ca-certificates.crt" | sha256sum -c -
+      - name: Build Windows installer
+        run: dart setup.dart windows --env stable -v
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FlClash-windows-installer
+          path: dist/*
+          if-no-files-found: error
